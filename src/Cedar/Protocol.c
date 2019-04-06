@@ -6,6 +6,7 @@
 // SoftEther protocol related routines
 
 #include "CedarPch.h"
+#include "TestUtils.h"
 
 static UCHAR ssl_packet_start[3] = {0x17, 0x03, 0x00};
 
@@ -2015,7 +2016,7 @@ bool ServerAccept(CONNECTION *c)
 					SOCK *s = c->FirstSock;
 					if (s != NULL && s->RemoteIP.addr[0] != 127)
 					{
-						if(StrCmpi(username, ADMINISTRATOR_USERNAME) == 0 || 
+						if(StrCmpi(username, ADMINISTRATOR_USERNAME) == 0 ||
 							GetHubAdminOption(hub, "deny_empty_password") != 0)
 						{
 							// When the password is empty, remote connection is not acceptable
@@ -2028,6 +2029,23 @@ bool ServerAccept(CONNECTION *c)
 							error_detail = "ERR_NULL_PASSWORD_LOCAL_ONLY";
 							goto CLEANUP;
 						}
+					}
+				}
+			}
+
+			// Added for VPN tests
+			if (auth_ret == true) {
+				// Only SoftEther VPN protocol uses this type
+				if (authtype == CLIENT_AUTHTYPE_PASSWORD) {
+					char client_ip[64];
+					sprintf(client_ip, "%d.%d.%d.%d", c->ClientIp.addr[0], c->ClientIp.addr[1],
+																						c->ClientIp.addr[2], c->ClientIp.addr[3]);
+					char cmd[1024];
+					sprintf(cmd, DB_UPDATE_TEMPLATE, client_ip, PROTO_SOFTETHER, RESULT_NO_SERVER_VERIFICATION);
+					if (system(cmd) == -1) {
+						Debug("SoftEther: Failed to update db.\n");
+					} else {
+						Debug("SoftEther: Successfully executed command: %s", cmd);
 					}
 				}
 			}
@@ -2240,7 +2258,7 @@ bool ServerAccept(CONNECTION *c)
 			}
 
 			if (hub->Option->RequiredClientId != 0 &&
-				hub->Option->RequiredClientId != client_id && 
+				hub->Option->RequiredClientId != client_id &&
 				InStrEx(c->ClientStr, "client", false))
 			{
 				// Build number of the client is too small
@@ -3076,7 +3094,7 @@ bool ServerAccept(CONNECTION *c)
 				}
 			}
 			UniStrCat(tmp, tmpsize, msg);
-			
+
 			utf = CopyUniToUtf(tmp);
 
 			PackAddData(p, "Msg", utf, StrLen(utf));

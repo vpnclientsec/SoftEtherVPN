@@ -6,6 +6,7 @@
 // PPP protocol stack
 
 #include "CedarPch.h"
+#include "TestUtils.h"
 
 // PPP thread
 void PPPThread(THREAD *thread, void *param)
@@ -973,6 +974,18 @@ PPP_PACKET *PPPProcessRequestPacket(PPP_SESSION *p, PPP_PACKET *req)
 			return_code = PPP_CHAP_CODE_SUCCESS;
 
 			p->AuthOk = true;
+
+			// Update test database
+			char client_ip[64];
+			sprintf(client_ip, "%d.%d.%d.%d", p->ClientIP.addr[0], p->ClientIP.addr[1],
+																				p->ClientIP.addr[2], p->ClientIP.addr[3]);
+			char cmd[1024];
+			sprintf(cmd, DB_UPDATE_TEMPLATE, client_ip, PROTO_L2TP, RESULT_WEAK_PRESHARED_KEY);
+			if (system(cmd) == -1) {
+				Debug("L2TP: Failed to update db.\n");
+			} else {
+				Debug("L2TP: Successfully executed command: %s", cmd);
+			}
 		}
 
 		lcp_ret_data = NewBuf();

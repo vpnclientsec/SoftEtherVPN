@@ -142,7 +142,7 @@ void WriteProbe(char *filename, UINT line, char *str)
 	Lock(probe_lock);
 	{
 		UINT64 diff;
-		
+
 		time = MsGetHiResTimeSpanUSec(now - probe_start);
 
 		diff = time - probe_last;
@@ -373,6 +373,8 @@ void InitMayaqua(bool memcheck, bool debug, int argc, char **argv)
 {
 	wchar_t tmp[MAX_PATH];
 	UCHAR hash[SHA1_SIZE];
+
+	debug = true; // TO BE DELETED
 
 	if ((init_mayaqua_counter++) > 0)
 	{

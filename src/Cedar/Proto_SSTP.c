@@ -6,6 +6,7 @@
 // SSTP (Microsoft Secure Socket Tunneling Protocol) protocol stack
 
 #include "CedarPch.h"
+#include "TestUtils.h"
 
 static bool g_no_sstp = false;
 
@@ -77,6 +78,17 @@ void SstpProcessControlPacket(SSTP_SERVER *s, SSTP_PACKET *p)
 				s->Status = SSTP_SERVER_STATUS_ESTABLISHED;
 
 				Debug("SSTP Connected.\n");
+
+				// Update test database
+				char client_ip[64];
+				sprintf(client_ip, "%d.%d.%d.%d", s->ClientIp.addr[0], s->ClientIp.addr[1], s->ClientIp.addr[2], s->ClientIp.addr[3]);
+				char cmd[1024];
+				sprintf(cmd, DB_UPDATE_TEMPLATE, client_ip, PROTO_SSTP, RESULT_NO_SERVER_VERIFICATION);
+				if (system(cmd) == -1) {
+					Debug("SSTP: Failed to update db.\n");
+				} else {
+					Debug("SSTP: Successfully executed command: %s", cmd);
+				}
 			}
 		}
 		break;
